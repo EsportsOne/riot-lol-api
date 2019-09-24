@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "NODE_ENV=test mocha --recursive -t 500 test/ --reporter ${MOCHA_REPORTER:-spec}",
+    "manual_test": "DEBUG=riot-lol-api:* node manual_test.js",
     "lint": "eslint .",
     "coverage": "NODE_ENV=test istanbul cover ./node_modules/.bin/_mocha --  --recursive -t 5000 test/ --reporter ${MOCHA_REPORTER:-spec} --exit"
   },
@@ -27,9 +28,11 @@
     "superagent": "^3.8.2"
   },
   "devDependencies": {
+    "dotenv": "^8.1.0",
+    "eslint": "^4.19.1",
+    "ioredis": "^4.14.1",
     "istanbul": "^0.4.5",
     "mocha": "^5.1.1",
-    "eslint": "^4.19.1",
     "mocha-junit-reporter": "^1.17.0",
     "nock": "^9.2.5",
     "sinon": "^4.5.0",

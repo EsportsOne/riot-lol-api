@@ -3,3 +3,5 @@ node_modules/
 npm-debug.log
 newrelic_agent.log
 coverage/
+index.js
+manual_test.js
