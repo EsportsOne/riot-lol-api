@@ -1,28 +1,35 @@
 # Riot Lol API
 
-This module lets you query the Riot API for LeagueOfLegends data.
+This module lets you query the Riot API for LeagueOfLegends data and was extended from [here](https://github.com/Neamar/riot-lol-api).
 
 You'll need a developer key from https://developer.riotgames.com.
 
 This module was developed for people that need to poll the Riot API with a *very high* throughput (with peaks above the standard production rate limit of 300 calls / second / region).
 
-If you don't need this kind of performance, you'll probably be better with other modules -- have a look at [lol-js](https://www.npmjs.com/package/lol-js) for instance :)
-
 ## Installation
 ```
-npm install --save riot-lol-api
+npm install --save github:EsportsOne/riot-lol-api
 ```
 
 ## Usage
 ```js
-var RiotRequest = require('riot-lol-api');
+const RiotRequest = require('riot-lol-api');
 
-var riotRequest = new RiotRequest('my_api_key');
+const config = {
+  apiKeys: GENERAL_RIOT_API_KEY, GARENA_RIOT_API_KEY,
+  cache,
+  options: {
+    garenaRateLimitCap: 70,
+    generalRateLimitCap: 70,
+    defaultRetryPeriod: 10
+  }
+}
 
-// 'summoner' is a string to identify the method being used currently
+const riotRequest = new RiotRequest('my_api_key');
+
 // See note about rate-limiting in the README.
 // Also see https://developer.riotgames.com/rate-limiting.html#method-headers
-riotRequest.request('euw1', 'summoner', '/lol/summoner/v3/summoners/by-name/graphistos', function(err, data) {});
+riotRequest.request('na1', '/lol/summoner/v4/summoners/by-name/Mackerhan', function(err, data) {});
 ```
 
 The library will take care of rate limiting and automatically retry on 500 and 503.
@@ -54,7 +61,7 @@ var cache = {
 
 
 ```js
-riotRequest.request('euw1', 'summoner', '/lol/summoner/v3/summoners/by-name/graphistos', YOUR_CACHE_STRATEGY, function(err, data) {});
+riotRequest.request('euw1', '/lol/summoner/v3/summoners/by-name/graphistos', YOUR_CACHE_STRATEGY, function(err, data) {});
 ```
 
 When unspecified, `cacheStrategy` will default to `false`, and cache won't be used.
@@ -71,23 +78,27 @@ The Riot API rate limiting is complex -- see https://developer.riotgames.com/rat
 
 This library abstracts most of it away, automatically reading the headers values and adjusting this behavior to ensure your key doesn't get blacklisted.
 
-However, when you call `.request`, you need to specifiy a string to identify the method currently being used.
-
-A list of all the buckets is available in https://developer.riotgames.com/rate-limiting.html#method-headers, but the TL;DR is that for every type of request you send, you should have some kind of tag: for instance, all requests for recent games can be tagged with "recent-games" (the second parameter to `.request(region, tag, endpoint)`. `riot-lol-api` will then ensure that all rate limits (both for the app and for the method) are respected per region.
-
-If the above paragraph didn't make any sense, go and check out the official Riot link above and then come back to this section ;)
-
 Here is a sample code excerpt: 
 
 ```js
-riotRequest.request('euw1', 'summoner', '/lol/summoner/v3/summoners/by-name/graphistos', function(err, data) {});
-riotRequest.request('euw1', 'champion-mastery', '/lol/champion-mastery/v3/champion-masteries/by-summoner/4203456', function(err, data) {});
-riotRequest.request('euw1', 'league', '/lol/league/v3/positions/by-summoner/4203456', function(err, data) {});
+riotRequest.request('euw1', '/lol/summoner/v3/summoners/by-name/graphistos', function(err, data) {});
+riotRequest.request('euw1', '/lol/champion-mastery/v3/champion-masteries/by-summoner/4203456', function(err, data) {});
+riotRequest.request('euw1', '/lol/league/v3/positions/by-summoner/4203456', function(err, data) {});
 ```
 
 ## Settings
-The `RiotRequest` constructor has a third parameter that is used to pass options.\
-Here is a list of available options:\
+The `RiotRequest` constructor has a takes in a config object that should look liek this:
+`{
+  apiKeys: GENERAL_RIOT_API_KEY, GARENA_RIOT_API_KEY,
+  cache,
+  options: {
+    garenaRateLimitCap: 70,
+    generalRateLimitCap: 70,
+    defaultRetryPeriod: 10
+  }
+}`
+* `garenaRateLimitCap` - How much of the total rate limit you want to use for a garena region out of 100.
+* `generalRateLimitCap` - How much of the total rate limit you want to use for a general region out of 100.
 * `defaultRetryPeriod` (Default: 10) - The retry period to use if the `Retry-After` header is not present (Numeric).
 
 ## Logging
@@ -104,13 +115,15 @@ HTTP errrors on the Riot API side will expose three properties:
 
 Please remember that the library will automatically retry once when it receives a 500 and 503.
 
-## Dealing with regions and platforms
-For convenience, the library exposes a function `getPlatformFromRegion()` that takes a region as parameter (e.g "euw") and returns the associaed platform to use with the Riot API ("EUW1"). This can be useful for building URLs.
-
-Additionally, there is also a `.REGIONS` property with an array of all valid Riot regions lowercased.
-
 ## Advanced topics
 Honestly, skip this section if you're using the library for the first time. I started using this option past 20 million calls a day...
+
+### Platform Cap
+Use case:
+
+* throttle some process based on region
+ 
+You can used the expose method `setPlatformCap(platform, cap)` to cap how many requests of the available the region will use.
 
 ### Throttler
 Use case:
